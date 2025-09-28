@@ -6,6 +6,15 @@
   <meta name="facebook-domain-verification" content="9es7nsm4usid2350ioxesrdhbbsp1v" />
   <title>Bono Exclusivo</title>
 
+  <!-- Preconnect / DNS Prefetch para acelerar destino -->
+  <link rel="preconnect" href="https://wa.me">
+  <link rel="preconnect" href="https://api.whatsapp.com">
+  <link rel="preconnect" href="https://web.whatsapp.com">
+  <link rel="dns-prefetch" href="https://wa.me">
+  <link rel="dns-prefetch" href="https://api.whatsapp.com">
+  <link rel="dns-prefetch" href="https://web.whatsapp.com">
+  <link rel="preconnect" href="https://connect.facebook.net">
+
   <!-- META PIXEL FACEBOOK -->
   <script>
     !function(f,b,e,v,n,t,s)
@@ -62,7 +71,7 @@
     .gate button{
       width:100%; margin-top:10px; padding:12px 14px; border:1px solid rgba(255,255,255,.12); border-radius:10px;
       background:#121212; color:#bfbfbf; font-weight:800; cursor:not-allowed; opacity:.7;
-      transition:opacity .2s ease, box-shadow .2s ease, transform .1s ease, background .2s ease, color .2s ease, border-color .2s ease;
+      transition:opacity .2s ease, box-shadow .2s ease, transform .1s ease, background .2s ease, color .1s ease, border-color .2s ease;
     }
     .gate button.enabled{ cursor:pointer; opacity:1; }
 
@@ -111,13 +120,8 @@
       border: 1px solid rgba(255,255,255,.22);
       border-radius: 16px;
     }
-    .gate h4{
-      font-size: 1.35rem;
-      letter-spacing: .2px;
-    }
-    .gate .opts{
-      display: flex; flex-wrap: wrap; gap: 14px 12px; justify-content: center; margin: 12px 0 10px;
-    }
+    .gate h4{ font-size: 1.35rem; letter-spacing: .2px; }
+    .gate .opts{ display: flex; flex-wrap: wrap; gap: 14px 12px; justify-content: center; margin: 12px 0 10px; }
     .gate label{
       font-size: 1.15rem; padding: 14px 18px; border-radius: 14px;
       background: rgba(255,255,255,.08);
@@ -128,8 +132,7 @@
       background: rgba(255,255,255,.14);
       box-shadow: 0 0 0 2px rgba(37,211,102,.55), 0 6px 18px rgba(0,0,0,.25);
     }
-    .gate input[type="radio"],
-    .gate input[type="checkbox"]{
+    .gate input[type="radio"], .gate input[type="checkbox"]{
       transform: scale(1.35);
       accent-color: #25d366;
     }
@@ -158,7 +161,7 @@
 
   <img class="logo" src="img/joker.png" alt="Payaso Joker’s Jewels">
 
-  <div class="bono">¡BONO +30% EN TU DEPOSITO!</div>
+  <div class="bono">¡BONO +50% EN TU DEPOSITO!</div>
   <div class="bono">¡SOLO POR HOY!</div>
   <div class="retiros">PAGOS EN EL ACTO</div>
   <div class="retiros">CARGAS SIN LÍMITES</div>
@@ -185,7 +188,7 @@
   <script>
   (function(){
     // Tu número con país, sin "+" ni espacios:
-    var PHONE = '5492234248903';
+    var PHONE = '5491150258839';
 
     var $ = s => document.querySelector(s);
     var qs = new URLSearchParams(location.search);
@@ -196,6 +199,64 @@
         ? crypto.randomUUID()
         : ('id_' + Date.now() + '_' + Math.random().toString(36).slice(2,10));
       return (prefix ? prefix + '_' : '') + core;
+    }
+
+    // Detectores simples de entorno
+    var UA = navigator.userAgent || "";
+    var isMobile = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(UA);
+    var isDesktop = !isMobile;
+
+    // Construye el texto limpio del mensaje
+    function buildMsg(){
+      return `Hola! Vengo por el BONO +50%. Juego: ${selected||''}.`;
+    }
+
+    // URLs de destino según dispositivo
+    function waURLs(text){
+      var enc = encodeURIComponent(text);
+      return {
+        app: `whatsapp://send?phone=${PHONE}&text=${enc}`,                   // App (móvil)
+        api: `https://api.whatsapp.com/send?phone=${PHONE}&text=${enc}`,     // Fallback móvil
+        wa:  `https://wa.me/${PHONE}?text=${enc}`,                            // Fallback genérico
+        web: `https://web.whatsapp.com/send?phone=${PHONE}&text=${enc}`      // Escritorio web
+      };
+    }
+
+    // Abridor inteligente de WhatsApp
+    function openWhatsAppSmart(text){
+      var urls = waURLs(text);
+
+      // Dispara el evento del Pixel con eventID + UTMs
+      try {
+        window.__waEventID = genEventID('wa');
+        if(window.fbq) fbq('trackCustom','WhatsAppClick', {
+          juego: selected || '',
+          eventID: window.__waEventID,
+          fbclid: qs.get('fbclid') || '',
+          utm_source: qs.get('utm_source') || '',
+          utm_medium: qs.get('utm_medium') || '',
+          utm_campaign: qs.get('utm_campaign') || '',
+          utm_content: qs.get('utm_content') || '',
+          utm_term: qs.get('utm_term') || ''
+        });
+      } catch(e){}
+
+      // Abrimos según entorno
+      if(isDesktop){
+        window.open(urls.web, '_blank', 'noopener');
+      } else {
+        // En móvil intentamos la app primero y, si no, caemos a api/wa
+        var opened = false;
+        try {
+          var appWin = window.open(urls.app, '_blank', 'noopener');
+          opened = !!appWin;
+        } catch(e){}
+        setTimeout(function(){
+          if(!opened){
+            window.open(urls.api, '_blank', 'noopener') || window.open(urls.wa, '_blank', 'noopener');
+          }
+        }, 400);
+      }
     }
 
     // Habilitar botón "Continuar" sólo cuando hay selección + mayor de 18
@@ -221,7 +282,7 @@
       btn.classList.toggle('enabled', ok);
     }
 
-    // Click en "Continuar": arma el enlace de WhatsApp (SIN UTM/fbclid en el texto) y muestra el botón
+    // Click en "Continuar": muestra botón WA y prearma href
     $('#continuar').addEventListener('click', function(){
       // Track del gate pasado con eventID (deduplicación con CAPI)
       try {
@@ -232,34 +293,22 @@
         });
       } catch(e){}
 
-      // ✅ Mensaje limpio (sin UTM / fbclid)
-      const text = `Hola! Vengo por el BONO +30%. Juego: ${selected||''}.`;
-      const wa = `https://wa.me/${PHONE}?text=${encodeURIComponent(text)}`;
-
       var btn = $('#wa-btn');
-      btn.href = wa;
       btn.style.display = 'inline-block';
       btn.scrollIntoView({ behavior:'smooth', block:'center' });
+
+      // Pre-armar href por si el usuario copia/pega o abre en otro momento
+      var text = buildMsg();
+      btn.href = waURLs(text).wa;
     });
 
-    // Click real en WhatsApp → evento con eventID (deduplicación) + UTMs al pixel (no al chat)
-    $('#wa-btn').addEventListener('click', function(){
-      try {
-        window.__waEventID = genEventID('wa');
-        if(window.fbq) fbq('trackCustom','WhatsAppClick', {
-          juego: selected || '',
-          eventID: window.__waEventID,
-          fbclid: qs.get('fbclid') || '',
-          utm_source: qs.get('utm_source') || '',
-          utm_medium: qs.get('utm_medium') || '',
-          utm_campaign: qs.get('utm_campaign') || '',
-          utm_content: qs.get('utm_content') || '',
-          utm_term: qs.get('utm_term') || ''
-        });
-      } catch(e){}
-      // Si querés sumar un estándar también:
-      // if(window.fbq) fbq('track','Lead', {value:1.00, currency:'USD'});
+    // Click real en WhatsApp → apertura inteligente
+    $('#wa-btn').addEventListener('click', function(e){
+      e.preventDefault(); // Usamos nuestro abridor "smart"
+      var text = buildMsg();
+      openWhatsAppSmart(text);
     });
+
   })();
   </script>
 </body>
